@@ -13,4 +13,4 @@ file(GLOB_RECURSE ALL_SRC
 
 add_executable(
         CppLox src/main.cpp ${ALL_SRC}
-        src/interpreter/Interpreter.cpp src/interpreter/Interpreter.h)
+)

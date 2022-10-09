@@ -136,12 +136,16 @@ namespace Interpreter {
         throw error(peek(), "Unexpected token '" + peek().lexeme + "' ");
     }
 
-    std::shared_ptr<Expr> Parser::Parse() {
+    std::vector<std::shared_ptr<Stmt>> Parser::Parse() {
+        std::vector<std::shared_ptr<Stmt>> statements;
         try {
-            return expression();
+            while (!isAtEnd()) {
+                statements.emplace_back(statement());
+            }
         } catch (ParseError& e) {
-            return std::make_unique<Expr>();
         }
+
+        return statements;
     }
 }
 

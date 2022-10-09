@@ -11,6 +11,11 @@ void AstGenerator::generate(const std::string &outputDir) {
             {"Literal", "Token value"},
             {"Unary", "Token op, std::shared_ptr<Expr> right"},
     });
+
+    defineAst(outputDir, "Stmt", {
+            {"Expression", "std::shared_ptr<Expr> expr"},
+            {"Print", "std::shared_ptr<Expr> expr"},
+    });
 }
 
 void AstGenerator::defineAst(const std::string &outputDir, const std::string &baseName,
@@ -19,10 +24,8 @@ void AstGenerator::defineAst(const std::string &outputDir, const std::string &ba
     fullPath /= (baseName + ".h");
     auto str = fullPath.string();
     std::ofstream out(fullPath.string());
+    out << "#ifndef CPPLOX_" << baseName << "_H\n#define CPPLOX_" << baseName << "_H";
     out << R"(
-#ifndef CPPLOX_EXPR_H
-#define CPPLOX_EXPR_H
-
 #include "../interpreter/Scanner.h"
 
 namespace Interpreter {
@@ -32,7 +35,7 @@ namespace Interpreter {
     public:
         class VisitorBase;
         template <typename R> class Visitor;
-        template <typename R> R accept(Visitor<R>& visitor) {
+        template <typename R> R execute(Visitor<R>& visitor) {
             doAccept(visitor);
             R result = visitor.result;
             visitor.result = R();
@@ -44,21 +47,16 @@ namespace Interpreter {
         out << "        class " << type.first << ";\n";
     }
 
-    out << R"(
-    };
+    out << "    };\n\n    class " << baseName << "::VisitorBase {\n    public:\n";
 
-    class Expr::VisitorBase {
-    public:
-)";
     for(auto& type: types) {
         out << "        virtual void visit" << type.first << baseName << "(" << type.first << "* expr) = 0;\n";
     }
 
-    out << R"(
-    };
+    out << "    };\n\n    template <typename R>\n    class ";
+    out << baseName << "::Visitor: public " << baseName << "::VisitorBase {";
 
-    template <typename R>
-    class Expr::Visitor: public Expr::VisitorBase {
+    out << R"(
     public:
         R result;
     };
@@ -68,12 +66,8 @@ namespace Interpreter {
         defineType(out, baseName, type.first, type.second);
     }
 
-    out << R"(
-}
+    out << "\n}\n\n#endif //CPPLOX_" << baseName << "_H";
 
-#endif //CPPLOX_EXPR_H
-)";
-    out << std::endl;
     out.close();
 }
 

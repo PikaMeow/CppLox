@@ -8,7 +8,7 @@
 
 #include <vector>
 #include "./Scanner.h"
-#include "../ast/Expr.h"
+#include "../ast/Stmt.h"
 
 namespace Interpreter {
 
@@ -28,6 +28,25 @@ namespace Interpreter {
         Token& consume(TokenType type, const std::string& message);
         ParseError error(Token& token, const std::string& message);
 
+        std::shared_ptr<Stmt> statement() {
+            if (match({ PRINT })) {
+                return printStmt();
+            }
+            return expressionStmt();
+        }
+
+        std::shared_ptr<Stmt> printStmt() {
+            auto expr = expression();
+            consume(SEMICOLON, "Statement must ends with semicolon.");
+            return std::make_shared<Stmt::Print>(expr);
+        }
+
+        std::shared_ptr<Stmt> expressionStmt() {
+            auto expr = expression();
+            consume(SEMICOLON, "Statement must ends with semicolon.");
+            return std::make_shared<Stmt::Expression>(expr);
+        }
+
         std::shared_ptr<Expr> expression();
         std::shared_ptr<Expr> equality();
         std::shared_ptr<Expr> comparison();
@@ -38,7 +57,7 @@ namespace Interpreter {
 
     public:
         Parser(std::vector<Token>& tokenList): tokenList(tokenList) {}
-        std::shared_ptr<Expr> Parse();
+        std::vector<std::shared_ptr<Stmt>> Parse();
     };
 }
 

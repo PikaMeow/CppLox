@@ -20,7 +20,6 @@ namespace Interpreter {
         class Grouping;
         class Literal;
         class Unary;
-
     };
 
     class Expr::VisitorBase {
@@ -29,7 +28,6 @@ namespace Interpreter {
         virtual void visitGroupingExpr(Grouping* expr) = 0;
         virtual void visitLiteralExpr(Literal* expr) = 0;
         virtual void visitUnaryExpr(Unary* expr) = 0;
-
     };
 
     template <typename R>

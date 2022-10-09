@@ -23,7 +23,9 @@ namespace Interpreter {
 
     void Interpreter::Interpret() {
         try {
-            std::cout << Common::stringify(evaluate(expr)) << std::endl;
+            for(auto& stmt: stmts) {
+                execute(stmt);
+            }
         } catch (RuntimeError& err) {
             CppLoxErrorHandler::runtimeError(err);
         }
