@@ -204,5 +204,15 @@ namespace Interpreter {
         }
         return statement();
     }
+
+    std::shared_ptr<Stmt> Parser::blockStmt() {
+        std::vector<std::shared_ptr<Stmt>> stmts;
+        while(!isAtEnd() && !check({ RIGHT_BRACE })) {
+            auto stmt = declaration();
+            stmts.emplace_back(stmt);
+        }
+        consume(RIGHT_BRACE, "Expect '}' after block.");
+        return std::make_shared<Stmt::Block>(stmts);
+    }
 }
 

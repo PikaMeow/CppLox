@@ -14,26 +14,10 @@ class Interpreter: public Expr::VisitorR<std::any>, public Stmt::Visitor {
     private:
         std::vector<std::shared_ptr<Stmt>> stmts;
         std::shared_ptr<Environment> environment;
-        void execute(std::shared_ptr<Stmt> stmt) {
-            stmt->accept(*this);
-        }
+        void execute(std::shared_ptr<Stmt> stmt);
         bool isTruthy(const std::any& expr);
         std::any evaluate(std::shared_ptr<Expr> expr);
-        void executeBlock(const std::vector<std::shared_ptr<Stmt>>& stmts, const std::shared_ptr<Environment> environment) {
-            auto previous = this->environment;
-            try {
-                this->environment = environment;
-                for(auto& stmt: stmts) {
-                    execute(stmt);
-                }
-            } catch(std::exception& e) {
-                this->environment = previous;
-                throw e;
-            }
-            this->environment = previous;
-        }
-
-
+        void executeBlock(const std::vector<std::shared_ptr<Stmt>>& stmts, const std::shared_ptr<Environment> environment);
 
     public:
         explicit Interpreter(const std::vector<std::shared_ptr<Stmt>>& stmts): stmts(stmts) {

@@ -33,15 +33,7 @@ namespace Interpreter {
         std::shared_ptr<Stmt> statement();
         std::shared_ptr<Stmt> printStmt();
         std::shared_ptr<Stmt> expressionStmt();
-        std::shared_ptr<Stmt> blockStmt() {
-            std::vector<std::shared_ptr<Stmt>> stmts;
-            while(!isAtEnd() && !check({ RIGHT_BRACE })) {
-                auto stmt = declaration();
-                stmts.emplace_back(stmt);
-            }
-            consume(RIGHT_BRACE, "Expect '}' after block.");
-            return std::make_shared<Stmt::Block>(stmts);
-        }
+        std::shared_ptr<Stmt> blockStmt();
 
         std::shared_ptr<Expr> expression();
         std::shared_ptr<Expr> assign();

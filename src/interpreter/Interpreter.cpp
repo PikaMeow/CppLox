@@ -113,4 +113,23 @@ namespace Interpreter {
         auto result = evaluate(stmt->initializer);
         environment->put(stmt->name.lexeme, result);
     }
+
+    void Interpreter::executeBlock(const std::vector<std::shared_ptr<Stmt>> &stmts,
+                                   const std::shared_ptr<Environment> environment) {
+        auto previous = this->environment;
+        try {
+            this->environment = environment;
+            for(auto& stmt: stmts) {
+                execute(stmt);
+            }
+        } catch(std::exception& e) {
+            this->environment = previous;
+            throw e;
+        }
+        this->environment = previous;
+    }
+
+    void Interpreter::execute(std::shared_ptr<Stmt> stmt) {
+        stmt->accept(*this);
+    }
 }
