@@ -90,4 +90,27 @@ namespace Interpreter {
     void Interpreter::visitLiteralExpr(Expr::Literal *expr) {
         this->result = expr->value.value;
     }
+
+    void Interpreter::visitVariableExpr(Expr::Variable *expr) {
+        this->result = environment->get(expr->name);
+    }
+
+    void Interpreter::visitAssignExpr(Expr::Assign *expr) {
+        auto result = evaluate(expr->value);
+        environment->assign(expr->name, result);
+    }
+
+    void Interpreter::visitExpressionStmt(Stmt::Expression *stmt) {
+        evaluate(stmt->expr);
+    }
+
+    void Interpreter::visitPrintStmt(Stmt::Print *stmt) {
+        auto result = evaluate(stmt->expr);
+        std::cout << Common::stringify(result) << std::endl;
+    }
+
+    void Interpreter::visitVarStmt(Stmt::Var *stmt) {
+        auto result = evaluate(stmt->initializer);
+        environment->put(stmt->name.lexeme, result);
+    }
 }

@@ -1,6 +1,5 @@
-
-#ifndef CPPLOX_STMT_H
-#define CPPLOX_STMT_H
+#ifndef CPPLOX_Stmt_H
+#define CPPLOX_Stmt_H
 
 #include "../interpreter/Scanner.h"
 #include "./Expr.h"
@@ -8,29 +7,33 @@
 namespace Interpreter {
     class Stmt {
     public:
-        class VisitorBase;
-        template <typename R> class Visitor;
-        template <typename R> R accept(Visitor<R>& visitor) {
+        class Visitor;
+        void accept(Visitor& visitor) {
             doAccept(visitor);
-            R result = visitor.result;
-            visitor.result = R();
-            return result;
         };
-        virtual void doAccept(VisitorBase& visitor) {}
+        virtual void doAccept(Visitor& visitor) {}
+        class Block;
         class Expression;
         class Print;
+        class Var;
     };
 
-    class Stmt::VisitorBase {
+    class Stmt::Visitor {
     public:
+        virtual void visitBlockStmt(Block* expr) = 0;
         virtual void visitExpressionStmt(Expression* expr) = 0;
         virtual void visitPrintStmt(Print* expr) = 0;
+        virtual void visitVarStmt(Var* expr) = 0;
     };
 
-    template <typename R>
-    class Stmt::Visitor: public Stmt::VisitorBase {
+    class Stmt::Block: public Stmt{
     public:
-        R result;
+        std::vector<std::shared_ptr<Stmt>> stmts;
+
+        Block(std::vector<std::shared_ptr<Stmt>> stmts):stmts(stmts) {}
+        void doAccept(Visitor& visitor) override {
+            visitor.visitBlockStmt(this);
+        };
     };
 
     class Stmt::Expression: public Stmt{
@@ -38,7 +41,7 @@ namespace Interpreter {
         std::shared_ptr<Expr> expr;
 
         Expression(std::shared_ptr<Expr> expr):expr(expr) {}
-        void doAccept(VisitorBase& visitor) override {
+        void doAccept(Visitor& visitor) override {
             visitor.visitExpressionStmt(this);
         };
     };
@@ -48,13 +51,22 @@ namespace Interpreter {
         std::shared_ptr<Expr> expr;
 
         Print(std::shared_ptr<Expr> expr):expr(expr) {}
-        void doAccept(VisitorBase& visitor) override {
+        void doAccept(Visitor& visitor) override {
             visitor.visitPrintStmt(this);
         };
     };
 
+    class Stmt::Var: public Stmt{
+    public:
+        Token name;
+        std::shared_ptr<Expr> initializer;
+
+        Var(Token name, std::shared_ptr<Expr> initializer):name(name), initializer(initializer) {}
+        void doAccept(Visitor& visitor) override {
+            visitor.visitVarStmt(this);
+        };
+    };
 
 }
 
-#endif //CPPLOX_STMT_H
-
+#endif

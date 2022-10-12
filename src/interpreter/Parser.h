@@ -28,26 +28,23 @@ namespace Interpreter {
         Token& consume(TokenType type, const std::string& message);
         ParseError error(Token& token, const std::string& message);
 
-        std::shared_ptr<Stmt> statement() {
-            if (match({ PRINT })) {
-                return printStmt();
+        std::shared_ptr<Stmt> declaration();
+        std::shared_ptr<Stmt> varDecl();
+        std::shared_ptr<Stmt> statement();
+        std::shared_ptr<Stmt> printStmt();
+        std::shared_ptr<Stmt> expressionStmt();
+        std::shared_ptr<Stmt> blockStmt() {
+            std::vector<std::shared_ptr<Stmt>> stmts;
+            while(!isAtEnd() && !check({ RIGHT_BRACE })) {
+                auto stmt = declaration();
+                stmts.emplace_back(stmt);
             }
-            return expressionStmt();
-        }
-
-        std::shared_ptr<Stmt> printStmt() {
-            auto expr = expression();
-            consume(SEMICOLON, "Statement must ends with semicolon.");
-            return std::make_shared<Stmt::Print>(expr);
-        }
-
-        std::shared_ptr<Stmt> expressionStmt() {
-            auto expr = expression();
-            consume(SEMICOLON, "Statement must ends with semicolon.");
-            return std::make_shared<Stmt::Expression>(expr);
+            consume(RIGHT_BRACE, "Expect '}' after block.");
+            return std::make_shared<Stmt::Block>(stmts);
         }
 
         std::shared_ptr<Expr> expression();
+        std::shared_ptr<Expr> assign();
         std::shared_ptr<Expr> equality();
         std::shared_ptr<Expr> comparison();
         std::shared_ptr<Expr> term();

@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "./interpreter/CppLox.h"
-#include "./common/AstGenerator.h"
+#include "tool/AstGenerator.h"
 
 int main(int argc, char** argv) {
     // AstGenerator::generate("D:\\Seafile\\Codes\\CppLox\\src\\ast");

@@ -8,7 +8,7 @@
 #include "../ast/Expr.h"
 
 namespace Interpreter {
-    class AstPrinter: public Expr::Visitor<std::string> {
+    class AstPrinter: public Expr::VisitorR<std::string> {
     private:
         std::string parenthesize(const std::string& name, const std::vector<std::shared_ptr<Expr>>& exprs) {
             std::stringstream buffer;

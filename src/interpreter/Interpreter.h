@@ -6,36 +6,53 @@
 #define CPPLOX_INTERPRETER_H
 
 #include "../ast/Stmt.h"
+#include "Environment.h"
 
 namespace Interpreter {
 
-class Interpreter: public Expr::Visitor<std::any>, public Stmt::Visitor<int> {
+class Interpreter: public Expr::VisitorR<std::any>, public Stmt::Visitor {
     private:
         std::vector<std::shared_ptr<Stmt>> stmts;
-        int execute(std::shared_ptr<Stmt> stmt) {
-            return stmt->accept(*this);
+        std::shared_ptr<Environment> environment;
+        void execute(std::shared_ptr<Stmt> stmt) {
+            stmt->accept(*this);
         }
         bool isTruthy(const std::any& expr);
         std::any evaluate(std::shared_ptr<Expr> expr);
+        void executeBlock(const std::vector<std::shared_ptr<Stmt>>& stmts, const std::shared_ptr<Environment> environment) {
+            auto previous = this->environment;
+            try {
+                this->environment = environment;
+                for(auto& stmt: stmts) {
+                    execute(stmt);
+                }
+            } catch(std::exception& e) {
+                this->environment = previous;
+                throw e;
+            }
+            this->environment = previous;
+        }
 
 
 
     public:
-        explicit Interpreter(const std::vector<std::shared_ptr<Stmt>>& stmts): stmts(stmts) {}
+        explicit Interpreter(const std::vector<std::shared_ptr<Stmt>>& stmts): stmts(stmts) {
+            environment = std::make_shared<Environment>();
+        }
         void Interpret();
 
         void visitBinaryExpr(Expr::Binary* expr) override;
         void visitGroupingExpr(Expr::Grouping* expr) override;
         void visitLiteralExpr(Expr::Literal* expr) override;
         void visitUnaryExpr(Expr::Unary* expr) override;
+        void visitVariableExpr(Expr::Variable* expr) override;
+        void visitAssignExpr(Expr::Assign* expr) override;
 
-        void visitExpressionStmt(Stmt::Expression* stmt) override {
-            evaluate(stmt->expr);
-        }
-
-        void visitPrintStmt(Stmt::Print* stmt) override {
-            auto result = evaluate(stmt->expr);
-            std::cout << Common::stringify(result) << std::endl;
+        void visitExpressionStmt(Stmt::Expression* stmt) override;
+        void visitPrintStmt(Stmt::Print* stmt) override;
+        void visitVarStmt(Stmt::Var* stmt) override;
+        void visitBlockStmt(Stmt::Block* stmt) override {
+            executeBlock(stmt->stmts, std::make_shared<Environment>(environment));
         }
     };
 }
