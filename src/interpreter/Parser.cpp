@@ -50,7 +50,7 @@ namespace Interpreter {
  * expression → equality ;
  */
     std::shared_ptr<Expr> Parser::expression() {
-        return equality();
+        return assign();
     }
 
 /*
@@ -127,6 +127,8 @@ namespace Interpreter {
     std::shared_ptr<Expr> Parser::primary() {
         if (match({ TRUE, FALSE, NIL, NUMBER, STRING }))
             return std::make_shared<Expr::Literal>(previous());
+        if (match({ IDENTIFIER }))
+            return std::make_shared<Expr::Variable>(previous());
         if (match({ LEFT_PAREN })) {
             auto expr = expression();
             consume(RIGHT_PAREN, "Expect ')' after expression.");
@@ -136,12 +138,81 @@ namespace Interpreter {
         throw error(peek(), "Unexpected token '" + peek().lexeme + "' ");
     }
 
-    std::shared_ptr<Expr> Parser::Parse() {
+    std::vector<std::shared_ptr<Stmt>> Parser::Parse() {
+        std::vector<std::shared_ptr<Stmt>> statements;
         try {
-            return expression();
+            while (!isAtEnd()) {
+                statements.emplace_back(declaration());
+            }
         } catch (ParseError& e) {
-            return std::make_unique<Expr>();
         }
+
+        return statements;
+    }
+
+    std::shared_ptr<Expr> Parser::assign() {
+        auto expr = equality();
+        if (match({ EQUAL })) {
+            Token equals = previous();
+            auto value = assign();
+
+            if (auto target = dynamic_cast<Expr::Variable*>(expr.get())) {
+                Token name = target->name;
+                return std::make_shared<Expr::Assign>(name, value);
+            }
+
+            error(equals, "Invalid assignment types.");
+        }
+        return expr;
+    }
+
+    std::shared_ptr<Stmt> Parser::expressionStmt() {
+        auto expr = expression();
+        consume(SEMICOLON, "Statement must ends with semicolon.");
+        return std::make_shared<Stmt::Expression>(expr);
+    }
+
+    std::shared_ptr<Stmt> Parser::printStmt() {
+        auto expr = expression();
+        consume(SEMICOLON, "Statement must ends with semicolon.");
+        return std::make_shared<Stmt::Print>(expr);
+    }
+
+    std::shared_ptr<Stmt> Parser::statement() {
+        if (match({ PRINT })) {
+            return printStmt();
+        }
+        if (match({ LEFT_BRACE })) {
+            return blockStmt();
+        }
+        return expressionStmt();
+    }
+
+    std::shared_ptr<Stmt> Parser::varDecl() {
+        auto name = consume(IDENTIFIER, "Expect variable name.");
+        auto initializer = std::make_shared<Expr>();
+        if (match({ EQUAL })) {
+            initializer = expression();
+        }
+        consume(SEMICOLON, "Expect ';' after variable declaration.");
+        return std::make_shared<Stmt::Var>(name, initializer);
+    }
+
+    std::shared_ptr<Stmt> Parser::declaration() {
+        if (match({ VAR })) {
+            return varDecl();
+        }
+        return statement();
+    }
+
+    std::shared_ptr<Stmt> Parser::blockStmt() {
+        std::vector<std::shared_ptr<Stmt>> stmts;
+        while(!isAtEnd() && !check({ RIGHT_BRACE })) {
+            auto stmt = declaration();
+            stmts.emplace_back(stmt);
+        }
+        consume(RIGHT_BRACE, "Expect '}' after block.");
+        return std::make_shared<Stmt::Block>(stmts);
     }
 }
 

@@ -1,1 +1,13 @@
-3+8*7-12+(1+(2*3)-8)*2+3/2
+var a = "123";
+{
+    var b = 444;
+    print b;
+    print a;
+    {
+        a = 123;
+        print a;
+        var a = "890";
+        print a;
+    }
+    print a;
+}

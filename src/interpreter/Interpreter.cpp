@@ -23,7 +23,9 @@ namespace Interpreter {
 
     void Interpreter::Interpret() {
         try {
-            std::cout << Common::stringify(evaluate(expr)) << std::endl;
+            for(auto& stmt: stmts) {
+                execute(stmt);
+            }
         } catch (RuntimeError& err) {
             CppLoxErrorHandler::runtimeError(err);
         }
@@ -87,5 +89,47 @@ namespace Interpreter {
 
     void Interpreter::visitLiteralExpr(Expr::Literal *expr) {
         this->result = expr->value.value;
+    }
+
+    void Interpreter::visitVariableExpr(Expr::Variable *expr) {
+        this->result = environment->get(expr->name);
+    }
+
+    void Interpreter::visitAssignExpr(Expr::Assign *expr) {
+        auto result = evaluate(expr->value);
+        environment->assign(expr->name, result);
+    }
+
+    void Interpreter::visitExpressionStmt(Stmt::Expression *stmt) {
+        evaluate(stmt->expr);
+    }
+
+    void Interpreter::visitPrintStmt(Stmt::Print *stmt) {
+        auto result = evaluate(stmt->expr);
+        std::cout << Common::stringify(result) << std::endl;
+    }
+
+    void Interpreter::visitVarStmt(Stmt::Var *stmt) {
+        auto result = evaluate(stmt->initializer);
+        environment->put(stmt->name.lexeme, result);
+    }
+
+    void Interpreter::executeBlock(const std::vector<std::shared_ptr<Stmt>> &stmts,
+                                   const std::shared_ptr<Environment> environment) {
+        auto previous = this->environment;
+        try {
+            this->environment = environment;
+            for(auto& stmt: stmts) {
+                execute(stmt);
+            }
+        } catch(std::exception& e) {
+            this->environment = previous;
+            throw e;
+        }
+        this->environment = previous;
+    }
+
+    void Interpreter::execute(std::shared_ptr<Stmt> stmt) {
+        stmt->accept(*this);
     }
 }

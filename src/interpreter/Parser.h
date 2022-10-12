@@ -8,7 +8,7 @@
 
 #include <vector>
 #include "./Scanner.h"
-#include "../ast/Expr.h"
+#include "../ast/Stmt.h"
 
 namespace Interpreter {
 
@@ -28,7 +28,15 @@ namespace Interpreter {
         Token& consume(TokenType type, const std::string& message);
         ParseError error(Token& token, const std::string& message);
 
+        std::shared_ptr<Stmt> declaration();
+        std::shared_ptr<Stmt> varDecl();
+        std::shared_ptr<Stmt> statement();
+        std::shared_ptr<Stmt> printStmt();
+        std::shared_ptr<Stmt> expressionStmt();
+        std::shared_ptr<Stmt> blockStmt();
+
         std::shared_ptr<Expr> expression();
+        std::shared_ptr<Expr> assign();
         std::shared_ptr<Expr> equality();
         std::shared_ptr<Expr> comparison();
         std::shared_ptr<Expr> term();
@@ -38,7 +46,7 @@ namespace Interpreter {
 
     public:
         Parser(std::vector<Token>& tokenList): tokenList(tokenList) {}
-        std::shared_ptr<Expr> Parse();
+        std::vector<std::shared_ptr<Stmt>> Parse();
     };
 }
 
